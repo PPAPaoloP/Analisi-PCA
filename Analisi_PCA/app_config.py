@@ -23,6 +23,7 @@
  *                  ├── main_tab_panel.py     <- Struttura e gestore dei TAB
  *                  ├── plot_canvas.py        <- Disegno del grafico, assi e vettori
  *                  └── control_column.py     <- Colonna di destra con Slider e Pulsanti
+ *                  └── about_dialog.py       <- Finestra modale informazioni (About / ?)
  *
  *  @version    1.0.0
  *  @author     Ing. Paolo Parrino
@@ -39,6 +40,18 @@
 APP_NAME = "Analisi PCA"
 APP_VERSION = "Ver 1.0.0"
 APP_AUTHOR = "Ing. Paolo Parrino"
+APP_DATE = "07 Novembre 2026"
+APP_COPYRIGHT = "Copyright (c) 2026 Ing. Paolo Parrino. All rights reserved - CONFIDENTIAL."
+APP_DESCRIPTION = ( "Applicazione desktop per l'analisi PCA (Principal Component Analysis) "
+                    "dedicata al confronto chimico-fisico e granulometrico degli orizzonti di suolo."
+                  )
+
+# ==========================================
+# DEFINIZIONE NOMI TAB
+# ==========================================
+TAB_NAME_SOIL_A = "Orizzonte Suolo A"
+# Predisposizione per futuri TAB:
+# TAB_NAME_SOIL_B = "Orizzonte Suolo B"
 
 # ==========================================
 # IMPOSTAZIONI FINESTRA
@@ -65,7 +78,7 @@ COLOR_BTN_BACKGROUND_HOVER  = "#007BFF"  # Sfondo pulsante premuto
 COLOR_BTN_BACKGROUND_ACTIVE = "#003F82"
 
 # ==========================================
-# CSS STYLE_SHEET GLOBALE DI BASE
+# CSS STYLE_SHEET GLOBALE DI BASE (CSS = Cascading Style Sheets - fogli di stile a cascata)
 # ==========================================
 # Il template format fa sì che vengano rimpiazzati al momento con i parametri cromatici esatti.
 GLOBAL_STYLE = f"""
@@ -80,8 +93,17 @@ GLOBAL_STYLE = f"""
         background-color: {COLOR_BACKGROUND_BOX};
         border: 1px solid {COLOR_BORDER_NORMAL};
         border-radius: 4px;
-        margin-top: 14px;
+        margin-top: 16px;
+        padding-top: 18px; /* Crea lo spazio vuoto in cima all'interno della cornice! */
         font-weight: bold;
+    }}
+    
+    QGroupBox::title {{
+        subcontrol-origin: margin;
+        subcontrol-position: top left;
+        left: 10px;
+        padding: 0 4px;
+        color: {COLOR_ACCENT_BLUE};
     }}
     
     QPushButton {{

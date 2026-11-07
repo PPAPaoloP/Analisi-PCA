@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>63ef1b69-3f59-4976-8c20-f624bbe35b1e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Analisi_PCA.py</StartupFile>
+    <StartupFile>AnalisiPCA_main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,12 +21,18 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Analisi_PCA.py" />
+    <Compile Include="AnalisiPCA_main.py" />
     <Compile Include="app_config.py" />
+    <Compile Include="widgets\about_dialog.py" />
+    <Compile Include="widgets\control_column.py" />
+    <Compile Include="widgets\main_tab_panel.py" />
+    <Compile Include="widgets\main_window.py" />
+    <Compile Include="widgets\plot_canvas.py" />
+    <Compile Include="widgets\top_banner.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="core\" />
-    <Folder Include="widget\" />
+    <Folder Include="widgets\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
