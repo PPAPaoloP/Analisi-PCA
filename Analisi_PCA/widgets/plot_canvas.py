@@ -59,32 +59,43 @@ class PlotCanvas(QWidget):
     def _init_annotation(self):
         """Prepara componente nativo tooltip in attesa posizionamento per label dei punti."""
         self.annot = self.ax.annotate(
-            "", xy=(0,0), xytext=(12, 12), textcoords="offset points",
-            bbox=dict(boxstyle="round4", fc="yellow", alpha=0.9, lw=0.5),
-            arrowprops=dict(arrowstyle="->", connectionstyle="arc3")
+            "", xy=(0,0), xytext=(18, 18), textcoords="offset points",
+            bbox=dict(boxstyle="round4", fc="yellow", alpha=0.95, lw=1.0),
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color='black'),
+            zorder=99  # Eleva assoluto rispetto a qualsiasi griglia Scatter.
         )
         self.annot.set_visible(False)
         self.canvas.mpl_connect("motion_notify_event", self.on_hover)
 
     def on_hover(self, event):
-        """Callback hardware: attiva annotazione popup eliminando redraws a cascata superflui."""
-        if event.inaxes == self.ax and self.scatters is not None:
-            cont, ind = self.scatters.contains(event)
-            if cont:
-                idx = ind["ind"][0] 
+        """Callback su ispezione topologica coordinate (Traccia ID identificativo sopra)."""
+        # Limita interruttività disinnescandolo prematuramente 
+        if not event.inaxes == self.ax or self.scatters is None:
+            return
+
+        cont, ind = self.scatters.contains(event)
+        
+        if cont:
+            idx = ind["ind"][0] 
+            # Estrazione Coordinate Assoluti Array NumPy XY Puntato Fisicamente Mouse . 
+            pos = self.scatters.get_offsets()[idx]
+            new_text = self.current_labels[idx]
+
+            # Trigger Attivatore Disegno Aggiornato Condizionato (Disegnato una-solavolta impedendo flickering OS! ): 
+            is_new_txt = (self.annot.get_text() != new_text)
+            is_different_pos = (self.annot.xy != pos).any()
+            
+            if not self.annot.get_visible() or is_new_txt or is_different_pos:
+                self.annot.xy = pos
+                self.annot.set_text(new_text)
+                self.annot.set_visible(True)
                 
-                # Check logico: Evita lo sfarfallio ritracciandolo solo al netto di variazione target (stato bool od identità punto). 
-                current_text = self.annot.get_text()
-                new_text = self.current_labels[idx]
-                if not self.annot.get_visible() or current_text != new_text:
-                    self.annot.xy = self.scatters.get_offsets()[idx]
-                    self.annot.set_text(new_text)
-                    self.annot.set_visible(True)
-                    self.canvas.draw_idle()
-            else:
-                if self.annot.get_visible():
-                    self.annot.set_visible(False)
-                    self.canvas.draw_idle()
+                # Forza il display solo previa mutazione visibile garantita (Evita overhead ram Matplotlib Engine Qt!)
+                self.canvas.draw_idle()
+        else:
+            if self.annot.get_visible():
+                self.annot.set_visible(False)
+                self.canvas.draw_idle()
 
     def clear_and_format_axis(self, xlab: str, ylab: str, 
                               g_alpha=0.7, g_ticks=8, g_x=True, g_y=True):

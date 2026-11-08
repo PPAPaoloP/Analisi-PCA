@@ -99,8 +99,9 @@ class MainWindow(QMainWindow):
         self.right_col.cb_shape.currentIndexChanged.connect(self._render_current_plot)
         self.right_col.cb_color.currentIndexChanged.connect(self._render_current_plot)
         
-        # Filtro mouse Pulsante ESPORTA (Nuovo test per Utenti File .CSV Scores puri/Loadings) 
+        # Filtro mouse Pulsante ESPORTA e asssegnazione esecuzione per il pulsante d'Esportazione (Nuovo test per Utenti File .CSV Scores puri/Loadings) 
         self.right_col.btn_save_pca.installEventFilter(self)
+        self.right_col.btn_save_pca.clicked.connect(self._action_export_pca)
 
     def eventFilter(self, source, event):
         """Monitoraggio eventi mouse su oggetti ispezionabili e aggiornamento Status Box."""
@@ -181,6 +182,71 @@ class MainWindow(QMainWindow):
             self._render_current_plot()
         else:
             self.top_banner.set_status_text(f"Interruzione Importazione DB locale.\nCause: {result}")
+
+    def _action_export_pca(self):
+        """Costruisce ed esporta tabelle metriche PCA su Hard-Drive via Pandas/openpyxl."""
+        node = self.tab_panel.currentWidget()
+        
+        # Validazione di presenza dei dati processabili
+        if not node or not node.data_backend.has_data():
+            self.top_banner.set_status_text("Violazione esportazione: Nessun orizzonte numerico al momento è istanziato o letto nel canvas.")
+            return
+
+        filepath, filter_string = QFileDialog.getSaveFileName(
+            self,
+            "Salvataggio Resoconto Multivariata (Punti, Autovettori e Varianza)",
+            "Dati_Analisi_Orizzonti.xlsx",
+            "File Excel/MS Data (*.xlsx);;Valori Comma Separati CSV (*.csv)"
+        )
+
+        if not filepath:
+            return  # Esportazione utente respinta
+
+        self.top_banner.set_status_text("Avviata formattazione Matrici... Processamento in attesa I/O sistema file...")
+        
+        engine = node.pca_engine
+        db = node.data_backend
+        
+        import pandas as pd
+        
+        try:
+            # Matrice A: Posizione Geometrica Scores campioni analizzati (Coordinatometrici)
+            df_scores = pd.DataFrame(
+                engine.scores, 
+                columns=[f"PC{i+1}" for i in range(engine.scores.shape[1])]
+            )
+            df_scores.insert(0, "Label Identificatore", db.labels)
+            
+            # Matrice B: Influenza Matematica Elemento per l'inclinamento Bi-plot Loadings vettoriali 
+            df_loadings = pd.DataFrame(
+                engine.loadings,
+                columns=[f"PC{i+1}_Magnitude" for i in range(engine.loadings.shape[1])]
+            )
+            df_loadings.insert(0, "Feature Osservata", engine.feature_names)
+
+            if filepath.endswith('.csv'):
+                # Lo standard Comma-Separated non incapsula multi-tables. Verrà esplicitamente passata sola Coordinatometria campioni
+                df_scores.to_csv(filepath, index=False)
+                self.top_banner.set_status_text(f"Salvata coordinata su CSV Piatto con Successo in : [{filepath.split('/')[-1]}].")
+            else:
+                # Estrazione scientifica nativa (Motore engine openpyxl precedentemente fornito nel core env)
+                with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+                    df_scores.to_excel(writer, sheet_name='Scores_Posizione_Suolo', index=False)
+                    df_loadings.to_excel(writer, sheet_name='Pesi_Feature_Loadings', index=False)
+                    
+                    df_info = pd.DataFrame({
+                        'Vettore Assoluto Principale': [f"PC{i+1}" for i in range(len(engine.variance))],
+                        'Percentuale Copertura % (Varianza)': engine.variance
+                    })
+                    df_info.to_excel(writer, sheet_name='Bilancio_Varianza_Apportata', index=False)
+                
+                self.top_banner.set_status_text(f"Tabulato analitico multi-cartella compilato! Nome asseverato al sistema [{filepath.split('/')[-1]}].")
+
+        except PermissionError:
+             self.top_banner.set_status_text("Error System(32) Permission: File temporaneamente occupato e ostruito (Spesso tenuto acceso nel background MS Excel chiuso).")
+        except Exception as esx:
+             self.top_banner.set_status_text(f"Critical Halt su Write IO Pandas module :\n->  {esx}")
+
 
     def _render_current_plot(self):
         """Coordinamento centrale del Canvas Plot Matematico a cura dell'Active Tab Browser!"""
