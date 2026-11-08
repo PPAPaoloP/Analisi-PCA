@@ -90,6 +90,18 @@ class MainWindow(QMainWindow):
         self.right_col.sl_thr.valueChanged.connect(self._render_current_plot)
         self.right_col.sl_scl.valueChanged.connect(self._render_current_plot)
 
+        # TRACCIATI SECONDARI DI RETICOLAZIONE GRAFICA AD ESTESA MANO D'AZIONE. (Re Render Totale Senza Ritocco Scikit) 
+        self.right_col.sl_pt_size.valueChanged.connect(self._render_current_plot)
+        self.right_col.sl_ticks.valueChanged.connect(self._render_current_plot)
+        self.right_col.sl_alpha.valueChanged.connect(self._render_current_plot)
+        self.right_col.chk_grid_x.toggled.connect(self._render_current_plot)
+        self.right_col.chk_grid_y.toggled.connect(self._render_current_plot)
+        self.right_col.cb_shape.currentIndexChanged.connect(self._render_current_plot)
+        self.right_col.cb_color.currentIndexChanged.connect(self._render_current_plot)
+        
+        # Filtro mouse Pulsante ESPORTA (Nuovo test per Utenti File .CSV Scores puri/Loadings) 
+        self.right_col.btn_save_pca.installEventFilter(self)
+
     def eventFilter(self, source, event):
         """Monitoraggio eventi mouse su oggetti ispezionabili e aggiornamento Status Box."""
         msg = None
@@ -100,6 +112,10 @@ class MainWindow(QMainWindow):
                 msg = ("Carica fogli Dati o database locali (CSV / Excel).\n"
                        "Estirperà formati invalidi preservando le variabili numeriche valide per l'Analisi Multi-variata.")
             
+            elif source == self.right_col.btn_save_pca:
+                msg = ("Scarica le matrici processate dell'area matematica (Scores/Coordinate Tabella in formatazione NumPy) "
+                       "sull'Hdd (Cartella Windows) ad uso import software graficati su base terza in futuro in formato Raw CSV Excel!")
+
             elif source == self.right_col.chk_std:
                 msg = ("Pre-Processamento PCA.\nAbilitandolo (consigliato) rimuove lo sbilanciamento forzato "
                        "quando le misure spaziano da minime (% argilla) ad estreme (metalli alcalini ppm).")
@@ -184,6 +200,15 @@ class MainWindow(QMainWindow):
         thr = self.right_col.sl_thr.value() / 10.0      # Da Integer Slide a range 0.0 -> 5.0 Magnitudine vettori Filtrata. 
         scl = self.right_col.sl_scl.value() / 10.0      # Moltiplicazione ingrandimento Visiva delle Retta Direzione. (Default è 2.5x per colpa del Canvas ratio piccolo originale)
         
+        # Parametri Estetici / Tracciamento Canvas Forme Retini UI Control Variables Array Extractor Base (A/R) e Conversioni Integer - > % Float alfa.. . 
+        ui_s = self.right_col.cb_shape.currentText()
+        ui_c = self.right_col.cb_color.currentText()
+        ui_size = self.right_col.sl_pt_size.value()
+        ui_t = self.right_col.sl_ticks.value()
+        ui_a = self.right_col.sl_alpha.value() / 100.0  
+        b_g_x = self.right_col.chk_grid_x.isChecked()
+        b_g_y = self.right_col.chk_grid_y.isChecked()
+
         # Scelta della Combinatoria su matrice Z Scikit (Mapping per l'Array finale)
         i_x, i_y = 0, 1 # By default (PC1 PC2 indici informatica [0 e 1] di matrice N righe C colonne NumPy Numpy ) 
         if "PC1 vs PC3" in lbl_assi:
@@ -198,20 +223,18 @@ class MainWindow(QMainWindow):
             
             var_x = core.variance[i_x] 
             var_y = core.variance[i_y]
-            
+
             # Affettatore Array per il 2D Piano specificatamente chiesto per estrarne due fasce colonna singola matrice V per Scores D'Analisi . 
             coord_pt = core.scores[:, [i_x, i_y]]
             
             # Idem vettore estrattivo assi lineari Feature e direttrici (V Loadings Matrix Extraction for iX / iY projection axis 2d rendering space canvas ):  
             dir_vt = core.loadings[:, [i_x, i_y]]
 
+            # Invio Dati Core all'Assemblatore QT/Python Esternalizzando tutti e tredici vari input!
             node.plot_surface.draw_biplot(
-                scores=coord_pt,
-                loadings=dir_vt,
-                features=core.feature_names,
+                scores=coord_pt, loadings=dir_vt, features=core.feature_names,
                 labels=db.labels, # La mappatura nominativa etichetta suoli campione ("TestA1...", Etc).
-                v1=var_x,
-                v2=var_y,
-                load_thr=thr, 
-                arr_scale=scl
+                v1=var_x, v2=var_y, load_thr=thr, arr_scale=scl,
+                pt_size=ui_size, pt_shape=ui_s, pt_color=ui_c,
+                g_a=ui_a, g_n=ui_t, g_rx=b_g_x, g_ry=b_g_y
             )    

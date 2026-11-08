@@ -117,8 +117,63 @@ class ControlColumn(QWidget):
         
         pca_group.setLayout(pca_layout)
         
+        # 3. GROUP REGOLAZIONE GRAFICO E STILI VISUALI PLOT BIANCO: 
+        aes_group = QGroupBox("Grafica Plot Dati Estesa")
+        aes_layout = QVBoxLayout()
+        aes_layout.setSpacing(6)
+        
+        # Shape/Colore Combo Panel  
+        h1 = QHBoxLayout()
+        self.cb_shape = QComboBox()
+        self.cb_shape.addItems(["Cerchio", "Quadrato", "Diamante", "Triangolo"])
+        self.cb_color = QComboBox()
+        self.cb_color.addItems(["Blu Scuro", "Verde Foresta", "Rosso Rame", "Arancio Brillante"])
+        
+        for c in (self.cb_shape, self.cb_color):
+            c.setStyleSheet(f"background-color: {cfg.COLOR_BACKGROUND_APP}; color: {cfg.COLOR_TEXT_MAIN}; padding: 1px;")
+            c.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        h1.addWidget(QLabel("Stile Punto:"))
+        h1.addWidget(self.cb_shape)
+        h1.addWidget(self.cb_color)
+        aes_layout.addLayout(h1)
+
+        # Dimensioni Punti & Slider Grandezze 
+        self.sl_pt_size = QSlider(Qt.Orientation.Horizontal)
+        self.sl_pt_size.setRange(20, 200) # Variabilità pixel raggio matplotlib base
+        self.sl_pt_size.setValue(45)
+        aes_layout.addWidget(QLabel("Scala Dimensione Indicatori (Pallini):"))
+        aes_layout.addWidget(self.sl_pt_size)
+        
+        # Numero di maglie di Linea (Tick MaxN Locator support) 
+        self.sl_ticks = QSlider(Qt.Orientation.Horizontal)
+        self.sl_ticks.setRange(4, 20)  
+        self.sl_ticks.setValue(9)      # Reticolato denso 9x9 default consigliato su schermi Widescreen ratio base  
+        aes_layout.addWidget(QLabel("Densità Maglia Tracciata (N° Quadranti):"))
+        aes_layout.addWidget(self.sl_ticks)
+        
+        # Opacità Globale Grid Panel (0 -> 100 integer -> 0.0 -> 1.0 visiva trasparente matematica interpolabile alfa reale! ) 
+        self.sl_alpha = QSlider(Qt.Orientation.Horizontal)
+        self.sl_alpha.setRange(5, 100) 
+        self.sl_alpha.setValue(65)
+        aes_layout.addWidget(QLabel("Luminosità/Contrasto Visivo (Canale Alpha):"))
+        aes_layout.addWidget(self.sl_alpha)
+
+        # Selezione Assi Rigato 
+        h_chk = QHBoxLayout()
+        self.chk_grid_x = QCheckBox("Reticolo Asse X")
+        self.chk_grid_x.setChecked(True)
+        self.chk_grid_y = QCheckBox("Reticolo Asse Y")
+        self.chk_grid_y.setChecked(True)
+        h_chk.addWidget(self.chk_grid_x)
+        h_chk.addWidget(self.chk_grid_y)
+        aes_layout.addLayout(h_chk)
+        
+        aes_group.setLayout(aes_layout)
+
         main_layout.addWidget(io_group)
         main_layout.addWidget(pca_group)
+        main_layout.addWidget(aes_group)
         main_layout.addStretch(1)
         
         self.setLayout(main_layout)
