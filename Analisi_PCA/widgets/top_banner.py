@@ -65,9 +65,7 @@ class TopBanner(QWidget):
             f"color: {cfg.COLOR_ACCENT_BLUE}; background-color: {cfg.COLOR_BACKGROUND_BOX}; "
             f"font-size: 10pt;"
         )
-        
-        clean_desc = cfg.APP_DESCRIPTION.replace("\n", " ")
-        self.status_box.setText(clean_desc)
+        self.status_box.setText(cfg.APP_DESCRIPTION)
         
         left_col.addWidget(title_lbl)
         left_col.addWidget(self.status_box)

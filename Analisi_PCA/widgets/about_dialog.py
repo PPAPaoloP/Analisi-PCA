@@ -87,9 +87,10 @@ class AboutDialog(QDialog):
         desc_lbl.setStyleSheet("background: transparent;")
         layout.addWidget(desc_lbl)
 
-        # Metadati tecnici: Autore e Runtime
+        # Metadati tecnici: Ringraziamenti Concept, Autore e Runtime
         py_ver = sys.version.split()[0]
         info_text = (
+            f"Original Concept :  {cfg.APP_CONCEPT}\n"
             f"Author  : {cfg.APP_AUTHOR}\n"
             f"Runtime : Python {py_ver} | PyQt6 {PYQT_VERSION_STR}"
         )

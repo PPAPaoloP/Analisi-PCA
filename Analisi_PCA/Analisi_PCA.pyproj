@@ -23,6 +23,8 @@
   <ItemGroup>
     <Compile Include="AnalisiPCA_main.py" />
     <Compile Include="app_config.py" />
+    <Compile Include="core\data_handler.py" />
+    <Compile Include="core\pca_engine.py" />
     <Compile Include="widgets\about_dialog.py" />
     <Compile Include="widgets\control_column.py" />
     <Compile Include="widgets\main_tab_panel.py" />

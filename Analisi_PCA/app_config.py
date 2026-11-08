@@ -40,10 +40,12 @@
 APP_NAME = "Analisi PCA"
 APP_VERSION = "Ver 1.0.0"
 APP_AUTHOR = "Ing. Paolo Parrino"
+APP_CONCEPT = "Dott.ssa Laura Fracasetti"
 APP_DATE = "07 Novembre 2026"
 APP_COPYRIGHT = "Copyright (c) 2026 Ing. Paolo Parrino. All rights reserved - CONFIDENTIAL."
-APP_DESCRIPTION = ( "Applicazione desktop per l'analisi PCA (Principal Component Analysis) "
-                    "dedicata al confronto chimico-fisico e granulometrico degli orizzonti di suolo."
+APP_DESCRIPTION = ( "Applicazione per l'analisi PCA (Principal Component Analysis) "
+                    "dedicata al confronto chimico-fisico e granulometrico degli orizzonti di suolo.\n"
+                    "Premere 'LOAD FILE EXCEL / CSV' per iniziare il caricamento."
                   )
 
 # ==========================================
@@ -67,6 +69,7 @@ RIGHT_COLUMN_WIDTH_RATIO = 0.30
 # ==========================================
 COLOR_BACKGROUND_APP   = "#0A0E12"  # Sfondo nerissimo dell'app intera
 COLOR_BACKGROUND_BOX   = "#12181F"  # Sfondo delle aree contenitive (GroupBox/Tab)
+COLOR_BACKGROUND_PANEL = "#1A2229"  # Grigio/Nero canna di fucile per sfondi documenti/tab
 COLOR_BORDER_NORMAL    = "#2E3D4A"  # Bordi grafici
 COLOR_TEXT_MAIN        = "#B9C6CE"  # Colore standard testo / scritte generiche
 COLOR_TEXT_DIMMED      = "#6C7A82"  # Colore note sottotitolo o disabilitati
@@ -96,6 +99,7 @@ GLOBAL_STYLE = f"""
         margin-top: 16px;
         padding-top: 18px; /* Crea lo spazio vuoto in cima all'interno della cornice! */
         font-weight: bold;
+        font-size: 12pt;
     }}
     
     QGroupBox::title {{
