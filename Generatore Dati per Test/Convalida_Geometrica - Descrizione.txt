@@ -1,0 +1,23 @@
+
+Sample,		Sostanza_Alpha,	Sostanza_Beta,	Inerte_Kappa
+Test-01,	10,				100,			50
+Test-03,	30,				60,				49
+Test-02,	20,				80,				51
+Test-04,	40,				40,				50
+Test-05,	50,				20,				50
+
+
+
+Perché questo dimostrerà che il Software funziona?
+
+Come noterai:
+Sostanza_Alpha cresce linearmente (10 -> 50).
+Sostanza_Beta decresce linearmente della medesima quantità e ritmo perfetto (100 -> 20). È una Correlazione Negativa Perfetta matematica (r = -1.0).
+Inerte_Kappa oscilla attorno a 50 ed è sostanzialmente puro rumore bianco minimo (Zero Varianza macroscopica).
+
+Cosa DEVE restituire l'Applicativo AnalisiPCA se i calcoli sono perfetti?
+Lancia l'app AnalisiPCA, e guarda il BiPlot con "Standardizzazione Attiva", e verifica il riscontro matematico esatto:
+Asse X (PC 1) descriverà matematicamente una proporzione maggiore al > 98.0 % (Perché Inerte Kappa sparisce al calcolo, essendo solo rumore geometrico a PC2).
+Il vettore rosso Sostanza_Alpha ed il vettore rosso Sostanza_Beta staranno posizionati con un allineamento a 180° l'uno all'esatto opposto dell'altro sull'Asse X. 
+Completamente piatti ed orizzontali in contrapposizione. (Perché r=-1 si traccia come assi collineari inversi nelle componenti di Loading).
+Esportando da Excel, vedrai questo dato stampato formalmente.
