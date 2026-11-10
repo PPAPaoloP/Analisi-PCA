@@ -23,11 +23,15 @@ matplotlib.use('QtAgg') # Imposta motore backend integrato Qt
 import matplotlib.ticker as ticker
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 
 class PlotCanvas(QWidget):
-    """Estensione di QWidget che fonde in finestra lo schema nativo DataPlot e Strumenti mouse."""
+    """Estensione di QWidget che fonde in finestra schema DataPlot emettendo Signals proprietari."""
+    
+    # Canale trasmissivo UI Custom Event
+    point_hovered = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -48,55 +52,95 @@ class PlotCanvas(QWidget):
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         
-        # Metadati per gestione cursori informativi popup
+        # Riferimenti Memoria Punti Correnti Canvas Render
         self.scatters = None
         self.current_labels = []
-        self._init_annotation()
         
-        # Pulisce assi pronti a primo utilizzo vuoto
+        # Abilita il collegamento nativo dell'ispezione mouse a hardware Qt/Matplotlib Bridge Canvas C
+        self.canvas.mpl_connect("motion_notify_event", self.on_hover)
+        
         self.clear_and_format_axis("PC 1", "PC 2")
 
-    def _init_annotation(self):
-        """Prepara componente nativo tooltip in attesa posizionamento per label dei punti."""
-        self.annot = self.ax.annotate(
-            "", xy=(0,0), xytext=(18, 18), textcoords="offset points",
-            bbox=dict(boxstyle="round4", fc="yellow", alpha=0.95, lw=1.0),
-            arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color='black'),
-            zorder=99  # Eleva assoluto rispetto a qualsiasi griglia Scatter.
-        )
-        self.annot.set_visible(False)
-        self.canvas.mpl_connect("motion_notify_event", self.on_hover)
-
     def on_hover(self, event):
-        """Callback su ispezione topologica coordinate (Traccia ID identificativo sopra)."""
-        # Limita interruttività disinnescandolo prematuramente 
-        if not event.inaxes == self.ax or self.scatters is None:
-            return
-
-        cont, ind = self.scatters.contains(event)
-        
-        if cont:
-            idx = ind["ind"][0] 
-            # Estrazione Coordinate Assoluti Array NumPy XY Puntato Fisicamente Mouse . 
-            pos = self.scatters.get_offsets()[idx]
-            new_text = self.current_labels[idx]
-
-            # Trigger Attivatore Disegno Aggiornato Condizionato (Disegnato una-solavolta impedendo flickering OS! ): 
-            is_new_txt = (self.annot.get_text() != new_text)
-            is_different_pos = (self.annot.xy != pos).any()
-            
-            if not self.annot.get_visible() or is_new_txt or is_different_pos:
-                self.annot.xy = pos
-                self.annot.set_text(new_text)
-                self.annot.set_visible(True)
-                
-                # Forza il display solo previa mutazione visibile garantita (Evita overhead ram Matplotlib Engine Qt!)
-                self.canvas.draw_idle()
+        """Attivatore silenzioso ed esclusivo emette Testo senza stampare su grafico sovraffollandolo."""
+        if event.inaxes == self.ax and self.scatters is not None:
+            cont, ind = self.scatters.contains(event)
+            if cont:
+                idx = ind["ind"][0] 
+                lbl = self.current_labels[idx]
+                self.point_hovered.emit(f"{lbl}")
+            else:
+                self.point_hovered.emit("---")
         else:
-            if self.annot.get_visible():
-                self.annot.set_visible(False)
-                self.canvas.draw_idle()
+             self.point_hovered.emit("---")
 
+
+    def clear_and_format_axis(self, xlab, ylab, g_alpha=0.7, g_ticks=8, g_x=True, g_y=True):
+        # Ricostruzione totale: nessuno stato può sopravvivere tra un disegno e l'altro
+        self.fig.clear()
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_facecolor('#FFFFFF')
+        self.ax.tick_params(colors='black')
+        for s in self.ax.spines.values():
+            s.set_color('black')
+        self.ax.xaxis.set_major_locator(ticker.MaxNLocator(g_ticks))
+        self.ax.yaxis.set_major_locator(ticker.MaxNLocator(g_ticks))
+
+        axis_opt = 'both' if (g_x and g_y) else 'x' if g_x else 'y' if g_y else None
+        if axis_opt:
+            self.ax.grid(True, axis=axis_opt, linestyle='--', linewidth=0.5,
+                         alpha=g_alpha, color='grey')
+        self.ax.axhline(0, color='black', linewidth=1.2, zorder=1)
+        self.ax.axvline(0, color='black', linewidth=1.2, zorder=1)
+        self.ax.set_xlabel(xlab, fontweight='bold', color='black')
+        self.ax.set_ylabel(ylab, fontweight='bold', color='black')
+
+
+    def draw_biplot(self, scores, loadings, features, labels, v1, v2,
+                    load_thr, arr_scale, pt_size, pt_shape, pt_color,
+                    g_a, g_n, g_rx, g_ry, ax_names=("PC 1", "PC 2")):
+        shapes_map = {"Cerchio": "o", "Quadrato": "s", "Diamante": "D", "Triangolo": "^"}
+        color_map = {"Blu Scuro": "#0057B8", "Verde Foresta": "green",
+                     "Rosso Rame": "#d92323", "Arancio Brillante": "orange"}
+        m_s = shapes_map.get(pt_shape, "o")
+        m_c = color_map.get(pt_color, "blue")
+
+        self.clear_and_format_axis(f"{ax_names[0]} ({v1:.1f}%)", f"{ax_names[1]} ({v2:.1f}%)",
+                                   g_alpha=g_a, g_ticks=g_n, g_x=g_rx, g_y=g_ry)
+        self.current_labels = labels
+
+        self.scatters = self.ax.scatter(scores[:, 0], scores[:, 1], c=m_c, s=pt_size,
+                                        marker=m_s, edgecolor='black', alpha=0.9, zorder=3)
+
+        # Scala frecce coerente con i punti: con arr_scale=2.5 la freccia più lunga
+        # arriva a ~80% del punto più lontano, sia con std ON che OFF.
+        max_score = max(np.abs(scores).max(), 1e-12)
+        max_load = max(np.linalg.norm(loadings, axis=1).max(), 1e-12)
+        k = (0.8 * max_score / max_load) * (arr_scale / 2.5)
+
+        xs, ys = list(scores[:, 0]), list(scores[:, 1])
+        for i, fname in enumerate(features):
+            lx, ly = loadings[i, 0], loadings[i, 1]
+            # soglia sulla magnitudine "grezza" del loading: indipendente dai dati
+            if np.hypot(lx, ly) * arr_scale >= load_thr:
+                x, y = lx * k, ly * k
+                self.ax.annotate('', xy=(x, y), xytext=(0, 0), zorder=4,
+                                 arrowprops=dict(arrowstyle='-|>', color='red', alpha=0.6, lw=1.5))
+                self.ax.text(x * 1.08, y * 1.08, fname, color='darkred', ha='center',
+                             va='center', fontweight='bold', fontsize=9, zorder=5)
+                xs += [x * 1.15]; ys += [y * 1.15]
+
+        # Limiti espliciti, sempre includendo l'origine
+        def lim(v):
+            lo, hi = min(min(v), 0), max(max(v), 0)
+            pad = 0.1 * (hi - lo if hi > lo else 1.0)
+            return lo - pad, hi + pad
+        self.ax.set_xlim(*lim(xs))
+        self.ax.set_ylim(*lim(ys))
+
+        self.canvas.draw()
+
+    '''
     def clear_and_format_axis(self, xlab: str, ylab: str, 
                               g_alpha=0.7, g_ticks=8, g_x=True, g_y=True):
         """Inizializza diagrammi con supporto regolazioni lineari MaxNLocator (Qt/Matplotlib)."""
@@ -158,3 +202,4 @@ class PlotCanvas(QWidget):
                 self.ax.arrow(0, 0, x, y, color='red', alpha=0.6, width=0.005, head_width=0.06)
                 self.ax.text(x * 1.05, y * 1.05, fname, color='darkred', ha='center', va='center', fontweight='bold', fontsize=9)
         self.canvas.draw()
+    '''

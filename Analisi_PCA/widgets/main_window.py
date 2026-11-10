@@ -290,17 +290,27 @@ class MainWindow(QMainWindow):
             var_x = core.variance[i_x] 
             var_y = core.variance[i_y]
 
-            # Affettatore Array per il 2D Piano specificatamente chiesto per estrarne due fasce colonna singola matrice V per Scores D'Analisi . 
+            # Affettatore Array per il 2D Piano specificatamente chiesto per estrarne due fasce colonna singola matrice V per Scores D'Analisi. 
             coord_pt = core.scores[:, [i_x, i_y]]
             
             # Idem vettore estrattivo assi lineari Feature e direttrici (V Loadings Matrix Extraction for iX / iY projection axis 2d rendering space canvas ):  
             dir_vt = core.loadings[:, [i_x, i_y]]
 
+            # Definizione dei nomi assi
+            names = {(0, 1): ("PC 1", "PC 2"), (0, 2): ("PC 1", "PC 3"), (1, 2): ("PC 2", "PC 3")}
+
             # Invio Dati Core all'Assemblatore QT/Python Esternalizzando tutti e tredici vari input!
             node.plot_surface.draw_biplot(
-                scores=coord_pt, loadings=dir_vt, features=core.feature_names,
+                scores=coord_pt, loadings=dir_vt, features=core.feature_names, ax_names=names[(i_x, i_y)],
                 labels=db.labels, # La mappatura nominativa etichetta suoli campione ("TestA1...", Etc).
                 v1=var_x, v2=var_y, load_thr=thr, arr_scale=scl,
                 pt_size=ui_size, pt_shape=ui_s, pt_color=ui_c,
                 g_a=ui_a, g_n=ui_t, g_rx=b_g_x, g_ry=b_g_y
-            )    
+            )
+
+            # Reingabbiamo ed accendiamo cablatura mouse locale senza duplicarne il segnale preesistente che ammucchierebbe: 
+            try: node.plot_surface.point_hovered.disconnect()
+            except TypeError: pass 
+            
+            # Applica la String str d'Etichetta campestre dal fondo array PCA passandolo sull'LCD/Vano Destro a cascata su aggiornamento display.
+            node.plot_surface.point_hovered.connect(self.right_col.lbl_target.setText)

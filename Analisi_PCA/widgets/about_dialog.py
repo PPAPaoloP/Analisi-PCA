@@ -20,6 +20,7 @@
 import sys
 from PyQt6.QtCore import Qt, PYQT_VERSION_STR
 from PyQt6.QtGui import QFont
+from widgets.math_dialog import MathDialog
 from PyQt6.QtWidgets import (
     QDialog,
     QFrame,
@@ -106,6 +107,19 @@ class AboutDialog(QDialog):
         layout.addWidget(copy_lbl)
 
         layout.addStretch(1)
+
+        # Pulsante INFO MATEMATICHE
+        btn_math = QPushButton("[ Consulta Equazioni (Scikit / Algebra) del Software ]")
+        btn_math.setStyleSheet(f"background-color: {cfg.COLOR_BACKGROUND_BOX}; border: 1px solid {cfg.COLOR_ACCENT_BLUE}; padding: 6px;")
+        btn_math.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Eventuale Pop Up Math se schiacciato...:
+        btn_math.clicked.connect(lambda: MathDialog(self).exec())
+
+        layout.addWidget(btn_math)
+
+        # Pulsante OK centrato per chiudere la finestra (Questo gia esisteva sotto) 
+        btn_row = QHBoxLayout()
+        ok_btn = QPushButton("OK Chiudi")
 
         # Pulsante OK centrato per chiudere la finestra
         btn_row = QHBoxLayout()

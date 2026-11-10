@@ -20,7 +20,6 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QGroupBox, QLabel,
                              QSlider, QHBoxLayout, QCheckBox, QComboBox)
 from PyQt6.QtCore import Qt
-
 import app_config as cfg
 
 class ControlColumn(QWidget):
@@ -176,6 +175,20 @@ class ControlColumn(QWidget):
         main_layout.addWidget(aes_group)
         main_layout.addStretch(1)
         
+        # 4. MODULO ISPETTORE ATTIVO COSTANTE DEL PLOT C-RENDER (Mouse Target Label): 
+        box_insp = QGroupBox("Target Grafico")
+        box_insp.setStyleSheet(f"border-color: {cfg.COLOR_BORDER_NORMAL}; border-radius: 4px; padding-top:10px; margin-top:4px;")
+        lay_insp = QVBoxLayout()
+        lay_insp.setContentsMargins(6, 6, 6, 6)
+        
+        self.lbl_target = QLabel("---")
+        self.lbl_target.setStyleSheet(f"color: {cfg.COLOR_ACCENT_GREEN}; font-size: 15pt; background: #000; padding:6px; font-weight:bold; border-radius: 4px; ")
+        self.lbl_target.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        lay_insp.addWidget(self.lbl_target)
+        box_insp.setLayout(lay_insp)
+        main_layout.addWidget(box_insp)
+
         self.setLayout(main_layout)
 
         # Avvio della cablatura UI locale (Aggiorna testi)
