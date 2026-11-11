@@ -1,14 +1,13 @@
 """
 /**
  *  @file       pca_engine.py
- *  @brief      Motore algebrico per Principal Component Analysis (Scikit-Learn).
+ *  @brief      Motore di calcolo per l'Analisi delle Componenti Principali (PCA).
  *
  *  @details
- *              Standardizza i dati in input ed implementa riduzione PCA. 
- *              Ad ogni nuova tracciatura (click / update di cursori UI) 
- *              assicura lo snapshotting immacolato in ram sbloccando determinismi 
- *              algebrici (impedendo specularità Random sulle assi Autovettore 2D 
- *              sostituendo memoria dinamica e cache). 
+ *              Standardizzazione opzionale delle variabili e PCA a 3 componenti
+ *              tramite scikit-learn. Il motore non conserva stato tra le chiamate:
+ *              ogni fit_transform() ricrea i modelli e lavora su una copia dei
+ *              dati, quindi il risultato dipende solo da input e parametri.
  *
  *  @version    1.0.0
  *  @author     Ing. Paolo Parrino
@@ -22,85 +21,56 @@
 import pandas as pd
 import numpy as np
 
-import hashlib
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+
 class PCAEngine:
-    """Implementazione dell'algoritmo di decomposizione multivariata (Scikit-Learn)"""
+    """Calcola la PCA (3 componenti) su una tabella di variabili numeriche."""
+
     def __init__(self):
-        # Inizializziamo a zero/vuoto le tracce rimaste
-        self.pca = None                       # PCA(n_components=3) # Consente accesso logico all'Autovettore PC3!
-        self.scaler = None                    # StandardScaler()
-        
-        # Array NumPy finali 
-        self.scores = None         # Coordinata x,y per ogni campione (row)
-        self.loadings = None       # Peso e direzione (x,y) per ogni feature/colonna
-        self.variance = [0.0, 0.0] # Spiegazione varianza [%] di PC1 e PC2
-        self.feature_names = []    # Mappatura etichette vettori
+        self.pca = None            # Modello sklearn PCA (ricreato a ogni calcolo)
+        self.scaler = None         # StandardScaler (ricreato a ogni calcolo)
+
+        self.scores = None         # Coordinate dei campioni sulle PC     (n x 3)
+        self.loadings = None       # Pesi delle variabili su ogni PC      (p x 3)
+        self.variance = [0.0, 0.0, 0.0]  # Varianza spiegata da PC1..PC3 [%]
+        self.feature_names = []    # Nomi delle variabili (colonne)
 
     def fit_transform(self, df: pd.DataFrame, standardize: bool = True) -> bool:
-        """Esegue fit statistico garantendo intoccabilità file sorgenti e blocca segni-assi a rigidi calcoli (solver=full) deterministico."""
+        """Calcola la PCA sulla tabella numerica `df`.
+
+        df          : righe = campioni, colonne = variabili (solo valori numerici).
+        standardize : True  -> centratura e scalatura a varianza unitaria
+                               (PCA sulla matrice di correlazione);
+                      False -> sola centratura (PCA sulla matrice di covarianza).
+        Ritorna True se il calcolo riesce, False se `df` è vuoto.
+        """
         if df is None or df.empty:
             return False
-       
-        # @PP Debug section
-        '''
-        h = pd.util.hash_pandas_object(df, index=True).sum()
-        print(f"[PCA] std={standardize} shape={df.shape} hash={h} cols={list(df.columns)[:5]}")
-        '''
 
-        # Ancoraggio etichetta features (metalli/esami terreno in array nomi testuale es [Sostanza_Alpha..]) 
         self.feature_names = df.columns.tolist()
-        
 
-        # ==============================================================
-        # CORE 1: SIGILLO ANTI INVERSIONI ASSE SPECULARI E ISOLAMENTO MATRICE IN RAM
-        # ==============================================================
-        # Obbliga Scikit (che in Backend C++ scompone iterativamente tramite metodi stocastici come arpack se lasciato decidere da se stesso) 
-        # a NON "scegliere Randomicamente o Euristicamente" invertendo asse XY nei Pareggi Parimerito Varianziali: RandomSeed+Full
-        self.pca = PCA(n_components=3, svd_solver='full', random_state=42)
-
-        # Si preprara allo scaling rigenerando uno scheletro nuovo anch'esso! (L'omissione di questa istruzione era il famoso NullPointerException di riga 55 poc'anzi!)
+        # Modelli ricreati a ogni chiamata: nessuno stato residuo tra i calcoli
         self.scaler = StandardScaler(copy=True)
-        
-        # Crea Fotocopia isolata dell'astronave Dati Matrice. Disaccoppia Pandas e Scikit dalla tabella GUI salvata su DBase 
+        self.pca = PCA(n_components=3, svd_solver='full')
+
+        # Copia di lavoro: il DataFrame originale non viene mai modificato
         data_matrix = np.array(df.values, dtype=float, copy=True)
 
-        # ==============================================================
-        # CORE 2: SINTESI DISTANZIALE NORMALIZZATIVA  
-        # ==============================================================
+        # Fase 1 - Pre-elaborazione
         if standardize:
-            # Equazione 1: Prende deviazioni differite del peso atomico/percentuali equiparandone e stirandole equamente a Forza Zero Media Varianza 1 assoluto globale per tutte X Features. 
+            # Z = (X - media) / deviazione standard, colonna per colonna
             data_matrix = self.scaler.fit_transform(data_matrix)
         else:
-            # Equazione 2 (Cruda/Raw data senza pesi pareggiati): 
-            # Non standardizza a 1 lo schiacciamento; ma Sottrae geometricamente sempre centro Origine Asse Spazio 3D dal Vettore spostandolo esattamente sull'origine grafico per poterlo Plotizzare con origini baricentriche vere Matplotlib . 
+            # Sola centratura: le variabili con valori più grandi pesano di più
             data_matrix = data_matrix - np.mean(data_matrix, axis=0)
 
-        # ==============================================================
-        # CORE 3: ACCENDI MOTORE RISOLUTIVO  
-        # ==============================================================
-        
-        # Mappa i Suoli Campione (N) schiacciandoli per punti Cardinali Scatter nello spazio cartesiano asse-vincitori.  (Coordinate Scatter Plot PC1..PCN). 
-        self.scores = self.pca.fit_transform(data_matrix)
-        
-        # I Vettori Direzionali: Orientamento puro pesi direzioni Loadings Traspone C[][] in Array Unidimensionali  .  
-        self.loadings = self.pca.components_.T 
-        
-        # Fattori descrittivi accuratezza modello e potenza in se. (Le label assi '%', salvata e proiettabile!).
-        self.variance = self.pca.explained_variance_ratio_ * 100
-        
-        # @PP Debug
-        '''
-        np.set_printoptions(precision=6, suppress=True)
-        print(f"[PCA] std={standardize}")
-        print("loadings:\n", self.loadings)
-        print("var%:", self.variance)
-        print("scores:\n", self.scores)
-        '''
+        # Fasi 2-4 - Covarianza, autovettori e proiezione (SVD di scikit-learn).
+        # Solver 'full' = SVD esatta; il segno di ogni PC è fissato da sklearn
+        # (svd_flip), quindi a parità di dati il risultato è sempre lo stesso.
+        self.scores = self.pca.fit_transform(data_matrix)          # (n x 3)
+        self.loadings = self.pca.components_.T                     # (p x 3)
+        self.variance = self.pca.explained_variance_ratio_ * 100   # % su var. totale
 
         return True
-
-    

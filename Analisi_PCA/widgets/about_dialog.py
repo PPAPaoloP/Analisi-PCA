@@ -109,7 +109,7 @@ class AboutDialog(QDialog):
         layout.addStretch(1)
 
         # Pulsante INFO MATEMATICHE
-        btn_math = QPushButton("[ Consulta Equazioni (Scikit / Algebra) del Software ]")
+        btn_math = QPushButton("[ Come funziona il calcolo PCA: matematica e codice ]")
         btn_math.setStyleSheet(f"background-color: {cfg.COLOR_BACKGROUND_BOX}; border: 1px solid {cfg.COLOR_ACCENT_BLUE}; padding: 6px;")
         btn_math.setCursor(Qt.CursorShape.PointingHandCursor)
         # Eventuale Pop Up Math se schiacciato...:
