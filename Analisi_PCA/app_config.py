@@ -38,7 +38,7 @@
 # METADATI DELL'APPLICAZIONE
 # ==========================================
 APP_NAME = "Analisi PCA"
-APP_VERSION = "Ver 1.0.0"
+APP_VERSION = "Ver 1.2.0"
 APP_AUTHOR = "Ing. Paolo Parrino"
 APP_CONCEPT = "Dott.ssa Laura Fracasetti"
 APP_DATE = "07 Novembre 2026"

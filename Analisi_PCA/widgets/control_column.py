@@ -78,17 +78,17 @@ class ControlColumn(QWidget):
 
         # C. Slider: Filtraggio Frecce (Threshold) + Valore Dinamico
         sl_thr_lay = QHBoxLayout()
-        self.lbl_thr = QLabel("Visibilità Frecce [Min]:")
+        self.lbl_thr = QLabel("Visibilità Frecce più deboli:")
         self.lbl_thr.setStyleSheet(f"color: {cfg.COLOR_TEXT_DIMMED}; font-size: 10pt;")
-        self.val_thr = QLabel("0.5") 
+        self.val_thr = QLabel("30%") 
         self.val_thr.setStyleSheet(f"color: {cfg.COLOR_ACCENT_BLUE}; font-weight: bold;")
         sl_thr_lay.addWidget(self.lbl_thr)
         sl_thr_lay.addStretch(1)
         sl_thr_lay.addWidget(self.val_thr)
 
         self.sl_thr = QSlider(Qt.Orientation.Horizontal)
-        self.sl_thr.setRange(0, 50)
-        self.sl_thr.setValue(5)
+        self.sl_thr.setRange(0, 100)
+        self.sl_thr.setValue(30)
         
         # D. Slider: Multiplicatore Zoom (Magnitudine) + Valore Dinamico
         sl_scl_lay = QHBoxLayout()
@@ -197,7 +197,7 @@ class ControlColumn(QWidget):
 
     def _update_slider_texts(self):
         """Reagisce internamente ai cambi slider restituendo formato ingegneristico sulle mini-labels laterali."""
-        v_thr = self.sl_thr.value() / 10.0
+        v_thr = self.sl_thr.value()
         v_scl = self.sl_scl.value() / 10.0
-        self.val_thr.setText(f"{v_thr:.1f}")
+        self.val_thr.setText(f"{v_thr}%")
         self.val_scl.setText(f"x {v_scl:.1f}")

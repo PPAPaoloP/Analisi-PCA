@@ -97,8 +97,10 @@ class PlotCanvas(QWidget):
 
 
     def draw_biplot(self, scores, loadings, features, labels, v1, v2,
-                    load_thr, arr_scale, pt_size, pt_shape, pt_color,
-                    g_a, g_n, g_rx, g_ry, ax_names=("PC 1", "PC 2")):
+                load_thr, arr_scale, pt_size, pt_shape, pt_color,
+                g_a, g_n, g_rx, g_ry, ax_names=("PC 1", "PC 2")):
+        """Biplot PCA. load_thr = % di frecce nascoste (0..100), partendo dalle più deboli."""
+
         shapes_map = {"Cerchio": "o", "Quadrato": "s", "Diamante": "D", "Triangolo": "^"}
         color_map = {"Blu Scuro": "#0057B8", "Verde Foresta": "green",
                      "Rosso Rame": "#d92323", "Arancio Brillante": "orange"}
@@ -114,27 +116,38 @@ class PlotCanvas(QWidget):
 
         # Scala frecce coerente con i punti: con arr_scale=2.5 la freccia più lunga
         # arriva a ~80% del punto più lontano, sia con std ON che OFF.
+        # (calcolata su TUTTE le feature, così non cambia muovendo la slide soglia)
         max_score = max(np.abs(scores).max(), 1e-12)
         max_load = max(np.linalg.norm(loadings, axis=1).max(), 1e-12)
         k = (0.8 * max_score / max_load) * (arr_scale / 2.5)
 
+        # Filtro a percentile: si nascondono le frecce più deboli, in ordine di magnitudine.
+        # Resta sempre almeno la freccia principale (max(1, ...)).
+        mags = np.hypot(loadings[:, 0], loadings[:, 1])
+        n_tot = len(features)
+        n_show = max(1, int(round(n_tot * (1.0 - load_thr / 100.0))))
+        n_show = min(n_show, n_tot)
+        # kind="stable": a parità di magnitudine l'ordine è sempre lo stesso (deterministico)
+        shown = set(np.argsort(-mags, kind="stable")[:n_show].tolist())
+
         xs, ys = list(scores[:, 0]), list(scores[:, 1])
         for i, fname in enumerate(features):
-            lx, ly = loadings[i, 0], loadings[i, 1]
-            # soglia sulla magnitudine "grezza" del loading: indipendente dai dati
-            if np.hypot(lx, ly) * arr_scale >= load_thr:
-                x, y = lx * k, ly * k
-                self.ax.annotate('', xy=(x, y), xytext=(0, 0), zorder=4,
-                                 arrowprops=dict(arrowstyle='-|>', color='red', alpha=0.6, lw=1.5))
-                self.ax.text(x * 1.08, y * 1.08, fname, color='darkred', ha='center',
-                             va='center', fontweight='bold', fontsize=9, zorder=5)
-                xs += [x * 1.15]; ys += [y * 1.15]
+            if i not in shown:
+                continue
+            x, y = loadings[i, 0] * k, loadings[i, 1] * k
+            self.ax.annotate('', xy=(x, y), xytext=(0, 0), zorder=4,
+                             arrowprops=dict(arrowstyle='-|>', color='red', alpha=0.6, lw=1.5))
+            self.ax.text(x * 1.08, y * 1.08, fname, color='darkred', ha='center',
+                         va='center', fontweight='bold', fontsize=9, zorder=5)
+            xs.append(x * 1.15)
+            ys.append(y * 1.15)
 
         # Limiti espliciti, sempre includendo l'origine
         def lim(v):
             lo, hi = min(min(v), 0), max(max(v), 0)
             pad = 0.1 * (hi - lo if hi > lo else 1.0)
             return lo - pad, hi + pad
+
         self.ax.set_xlim(*lim(xs))
         self.ax.set_ylim(*lim(ys))
 

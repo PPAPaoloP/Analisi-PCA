@@ -126,8 +126,8 @@ class MainWindow(QMainWindow):
                        "Permette la scansione geometrica analizzando variabili incrociate se i campioni differiscono poco sul fronte primario.")
             
             elif source == self.right_col.sl_thr:
-                msg = ("Regolazione Soglia Minima di Plot:\n"
-                       "Filtra e non visualizza i Vettori i cui elementi impattano la decomposizione complessiva del biplot solo superficialmente.")
+                msg = ("Regolazione frecce visualizzate di Plot:\n"
+                       "Nasconde la percentuale scelta di frecce, partendo da quelle con minore influenza sul piano mostrato.")
             
             elif source == self.right_col.sl_scl:
                 msg = ("Fattore Visuale Scala (Rendering visivo Matplotlib):\n"
@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
         # Legge Hardware Fisico-Sensoriale del UI: Parametria attiva 
         usa_std = self.right_col.chk_std.isChecked()
         lbl_assi = self.right_col.combo_axes.currentText()
-        thr = self.right_col.sl_thr.value() / 10.0      # Da Integer Slide a range 0.0 -> 5.0 Magnitudine vettori Filtrata. 
+        thr = self.right_col.sl_thr.value()             # 0..100 = % di frecce nascoste 
         scl = self.right_col.sl_scl.value() / 10.0      # Moltiplicazione ingrandimento Visiva delle Retta Direzione. (Default è 2.5x per colpa del Canvas ratio piccolo originale)
         
         # Parametri Estetici / Tracciamento Canvas Forme Retini UI Control Variables Array Extractor Base (A/R) e Conversioni Integer - > % Float alfa.. . 
