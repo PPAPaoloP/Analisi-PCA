@@ -17,7 +17,7 @@
 """
 
 from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel,
-                             QFileDialog)
+                             QFileDialog, QMessageBox)
 from PyQt6.QtCore import Qt, QEvent
 
 import app_config as cfg
@@ -180,6 +180,8 @@ class MainWindow(QMainWindow):
             self.top_banner.set_status_text(f"File {nome_file_puro} importato con successo.\n[{msg}]")
             # Richiesta di disegno per il Biplot iniziale avendo appena introdotto un DataBase sano
             self._render_current_plot()
+            if current_tab_node.data_backend.warnings:
+                self._show_import_warnings(current_tab_node.data_backend.warnings)
         else:
             self.top_banner.set_status_text(f"Interruzione Importazione DB locale.\nCause: {result}")
 
@@ -248,6 +250,18 @@ class MainWindow(QMainWindow):
              self.top_banner.set_status_text(f"Critical Halt su Write IO Pandas module :\n->  {esx}")
 
 
+    def _show_import_warnings(self, avvisi):
+        """Finestra modale: l'utente deve vedere cosa è stato escluso dall'analisi."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle("Importazione completata con avvisi")
+        box.setText("Alcuni dati del file non erano utilizzabili e sono stati "
+                    "esclusi dall'analisi. Il file originale non è stato modificato.")
+        box.setInformativeText("Per includerli, correggi il file e ricaricalo. "
+                               "Dettagli con il pulsante qui sotto.")
+        box.setDetailedText("\n\n".join(avvisi))
+        box.exec()
+
     def _render_current_plot(self):
         """Coordinamento centrale del Canvas Plot Matematico a cura dell'Active Tab Browser!"""
         node = self.tab_panel.currentWidget()
@@ -283,7 +297,11 @@ class MainWindow(QMainWindow):
             i_x, i_y = 1, 2
         
         # Genera Analiticamente ad un core fisico hardware Matplotlib C-Optimized C: il DataFrame. Mantenendo Standarizzato/Misti.
-        riscontro_algebra_fatta = core.fit_transform(db.features_df, standardize=usa_std)
+        try:
+            riscontro_algebra_fatta = core.fit_transform(db.features_df, standardize=usa_std)
+        except Exception as ex:
+            self.top_banner.set_status_text(f"Errore nel calcolo PCA: {ex}")
+            return
 
         if riscontro_algebra_fatta:
             
